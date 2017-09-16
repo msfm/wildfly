@@ -183,7 +183,7 @@ public class Server implements Service<Server> {
 
         @Override
         public void handleRequest(HttpServerExchange exchange) throws Exception {
-            if(!exchange.getRequestHeaders().contains(Headers.HOST)) {
+            if(!exchange.getRequestHeaders().contains(Headers.HOST) || exchange.getRequestHeaders().get(Headers.HOST).getFirst().isEmpty()) {
                 exchange.getRequestHeaders().put(Headers.HOST, defaultHost + ":" + exchange.getDestinationAddress().getPort());
             }
             next.handleRequest(exchange);
