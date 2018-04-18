@@ -56,10 +56,14 @@ public class CodecSessionConfig implements SessionConfig {
         String encodedSessionId = this.config.findSessionId(exchange);
         if (encodedSessionId == null) return null;
         String sessionId = this.codec.decode(encodedSessionId);
-        // Check if the encoding for this session has changed
-        String reencodedSessionId = this.codec.encode(sessionId);
-        if (!reencodedSessionId.equals(encodedSessionId)) {
-            this.config.setSessionId(exchange, reencodedSessionId);
+        // Check if the session is already invalidated or not
+        String invalidated = exchange.getAttachment(HttpServerExchange.INVALIDATED_SESSION);
+        if (invalidated == null || !invalidated.equals(sessionId)) {
+            // Check if the encoding for this session has changed
+            String reencodedSessionId = this.codec.encode(sessionId);
+            if (!reencodedSessionId.equals(encodedSessionId)) {
+                this.config.setSessionId(exchange, reencodedSessionId);
+            }
         }
         return sessionId;
     }
