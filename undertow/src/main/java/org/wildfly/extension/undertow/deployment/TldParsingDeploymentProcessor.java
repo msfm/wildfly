@@ -91,6 +91,9 @@ public class TldParsingDeploymentProcessor implements DeploymentUnitProcessor {
         testRoots.add(deploymentRoot);
         testRoots.add(deploymentRoot.getChild(WEB_INF));
         testRoots.add(deploymentRoot.getChild(META_INF));
+        for (VirtualFile overlay : warMetaData.getOverlays()) {
+            testRoots.add(overlay);
+        }
         for (ResourceRoot root : deploymentUnit.getAttachmentList(Attachments.RESOURCE_ROOTS)) {
             testRoots.add(root.getRoot());
             testRoots.add(root.getRoot().getChild(META_INF));

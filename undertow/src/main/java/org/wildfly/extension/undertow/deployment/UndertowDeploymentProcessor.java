@@ -569,7 +569,9 @@ public class UndertowDeploymentProcessor implements DeploymentUnitProcessor {
             int pos = relativeLocation.indexOf('/', "/WEB-INF/lib/".length());
             if (pos > 0) {
                 jarPath = relativeLocation.substring(pos);
-                if (jarPath.startsWith("/")) {
+                if (jarPath.startsWith("/META-INF/resources")) {
+                    jarPath = jarPath.substring("/META-INF/resources".length());
+                } else if (jarPath.startsWith("/")) {
                     jarPath = jarPath.substring(1);
                 }
                 relativeLocation = relativeLocation.substring(0, pos);
@@ -704,6 +706,9 @@ public class UndertowDeploymentProcessor implements DeploymentUnitProcessor {
             tagLibraryInfo.setPath(jarPath);
             if (!ret.containsKey(tagLibraryInfo.getUri())) {
                 ret.put(tagLibraryInfo.getUri(), tagLibraryInfo);
+            }
+            if (!ret.containsKey(jarPath)) {
+                ret.put(jarPath, tagLibraryInfo);
             }
             if (jarPath.equals("META-INF/taglib.tld")) {
                 ret.put(relativeLocation, tagLibraryInfo);
