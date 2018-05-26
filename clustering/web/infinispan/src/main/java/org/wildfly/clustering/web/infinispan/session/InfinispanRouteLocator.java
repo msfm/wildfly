@@ -39,6 +39,9 @@ import org.wildfly.clustering.web.session.RouteLocator;
  */
 public class InfinispanRouteLocator implements RouteLocator {
 
+    // See https://issues.jboss.org/browse/JBEAP-14797 and https://issues.jboss.org/browse/JBEAP-6078
+    private static final boolean JVMROUTE_LOCAL_NODE = Boolean.getBoolean("jvmroute.local.node");
+
     private final NodeFactory<Address> factory;
     private final Registry<String, Void> registry;
     private final Cache<String, ?> cache;
@@ -51,6 +54,10 @@ public class InfinispanRouteLocator implements RouteLocator {
 
     @Override
     public String locate(String sessionId) {
+        if (JVMROUTE_LOCAL_NODE) {
+            Map.Entry<String, Void> entry = this.registry.getEntry(this.registry.getGroup().getLocalMember());
+            return (entry != null) ? entry.getKey() : null;
+        }
         DistributionManager dist = this.cache.getAdvancedCache().getDistributionManager();
         Address address = (dist != null) && !this.cache.getCacheConfiguration().clustering().cacheMode().isScattered() ? dist.getCacheTopology().getDistribution(new Key<>(sessionId)).primary() : this.cache.getCacheManager().getAddress();
         Node node = (address != null) ? this.factory.createNode(address) : null;
