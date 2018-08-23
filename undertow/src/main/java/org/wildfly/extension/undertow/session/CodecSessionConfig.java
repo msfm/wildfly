@@ -25,6 +25,7 @@ import org.jboss.as.web.session.SessionIdentifierCodec;
 
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.session.SessionConfig;
+import io.undertow.servlet.api.Deployment;
 import io.undertow.util.AttachmentKey;
 
 /**
@@ -36,11 +37,17 @@ public class CodecSessionConfig implements SessionConfig {
 
     private final SessionConfig config;
     private final SessionIdentifierCodec codec;
+    private final Deployment deployment;
     private static final AttachmentKey<Boolean> SESSION_ID_SET = AttachmentKey.create(Boolean.class);
 
     public CodecSessionConfig(SessionConfig config, SessionIdentifierCodec codec) {
+        this(config, codec, null);
+    }
+
+    public CodecSessionConfig(SessionConfig config, SessionIdentifierCodec codec, Deployment deployment) {
         this.config = config;
         this.codec = codec;
+        this.deployment = deployment;
     }
 
     @Override
@@ -59,6 +66,10 @@ public class CodecSessionConfig implements SessionConfig {
         String encodedSessionId = this.config.findSessionId(exchange);
         if (encodedSessionId == null) return null;
         String sessionId = this.codec.decode(encodedSessionId);
+        // Check if the request sessionid exists in the session manager
+        if (deployment != null && deployment.getSessionManager().getSession(sessionId) == null) {
+            return sessionId; // If the session does not exist, no need to check the encoding change.
+        }
         // Check if the encoding for this session has changed
         String reencodedSessionId = this.codec.encode(sessionId);
         if (!reencodedSessionId.equals(encodedSessionId) && exchange.getAttachment(SESSION_ID_SET) == null) {
