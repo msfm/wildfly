@@ -42,6 +42,6 @@ public class CodecSessionConfigWrapper implements SessionConfigWrapper {
 
     @Override
     public SessionConfig wrap(SessionConfig config, Deployment deployment) {
-        return new CodecSessionConfig(config, this.codec);
+        return new CodecSessionConfig(config, this.codec, deployment);
     }
 }

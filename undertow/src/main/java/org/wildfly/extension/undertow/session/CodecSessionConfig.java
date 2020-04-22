@@ -21,10 +21,18 @@
  */
 package org.wildfly.extension.undertow.session;
 
+import java.util.List;
+import java.util.Map;
+
 import org.jboss.as.web.session.SessionIdentifierCodec;
+import org.wildfly.extension.undertow.logging.UndertowLogger;
 
 import io.undertow.server.HttpServerExchange;
+import io.undertow.server.handlers.Cookie;
+import io.undertow.server.session.Session;
 import io.undertow.server.session.SessionConfig;
+import io.undertow.server.session.SessionManager;
+import io.undertow.servlet.api.Deployment;
 import io.undertow.util.AttachmentKey;
 
 /**
@@ -37,10 +45,21 @@ public class CodecSessionConfig implements SessionConfig {
 
     private final SessionConfig config;
     private final SessionIdentifierCodec codec;
+    private final SessionManager sessionManager;
+    private final String sessionCookieName;
 
     public CodecSessionConfig(SessionConfig config, SessionIdentifierCodec codec) {
         this.config = config;
         this.codec = codec;
+        this.sessionManager = null;
+        this.sessionCookieName = null;
+    }
+
+    public CodecSessionConfig(SessionConfig config, SessionIdentifierCodec codec, Deployment deployment) {
+        this.config = config;
+        this.codec = codec;
+        this.sessionManager = deployment.getSessionManager();
+        this.sessionCookieName = deployment.getServletContext().getSessionCookieConfig().getName();
     }
 
     @Override
@@ -59,12 +78,38 @@ public class CodecSessionConfig implements SessionConfig {
         String encodedSessionId = this.config.findSessionId(exchange);
         if (encodedSessionId == null) return null;
         CharSequence sessionId = this.codec.decode(encodedSessionId);
-        // Check if the encoding for this session has changed
-        CharSequence reencodedSessionId = this.codec.encode(sessionId);
-        if ((exchange.getAttachment(SESSION_ID_SET) == null) && !encodedSessionId.contentEquals(reencodedSessionId)) {
-            this.config.setSessionId(exchange, reencodedSessionId.toString());
+        if (sessionManager != null && sessionCookieName != null) {
+            // chech if the session exists in the session manager
+            Session session = sessionManager.getSession(sessionId.toString());
+            if (session == null) {
+                sessionId = null; // the previous decoded sessionId does not exist
+                // Obtain DUPLICATES_REQUEST_COOKIES from exchange attachment
+                final Map<String, List<Cookie>> dupRequestCookieMap = exchange.getAttachment(HttpServerExchange.DUPLICATES_REQUEST_COOKIES);
+                if (dupRequestCookieMap != null) {
+                    final List<Cookie> list = dupRequestCookieMap.get(sessionCookieName);
+                    for (Cookie cookie : list) {
+                        // check if the session exists in the session manager
+                        encodedSessionId = cookie.getValue();
+                        sessionId = this.codec.decode(encodedSessionId);
+                        session = sessionManager.getSession(sessionId.toString());
+                        if (session != null) {
+                            UndertowLogger.ROOT_LOGGER.debugf("##### Found a session [%s] from duplicate request cookies [%s]", session, encodedSessionId);
+                            break;
+                        }
+                    }
+                }
+            }
         }
-        return sessionId.toString();
+        if (sessionId != null) {
+            // Check if the encoding for this session has changed
+            CharSequence reencodedSessionId = this.codec.encode(sessionId);
+            if ((exchange.getAttachment(SESSION_ID_SET) == null) && !encodedSessionId.contentEquals(reencodedSessionId)) {
+                this.config.setSessionId(exchange, reencodedSessionId.toString());
+            }
+            return sessionId.toString();
+        } else {
+            return null;
+        }
     }
 
     @Override
