@@ -136,7 +136,7 @@ public class UndertowEngine implements Engine {
 
     @Override
     public void setJvmRoute(String jvmRoute) {
-        // Ignore
+        this.server.setRoute(jvmRoute);
     }
 
     @Override

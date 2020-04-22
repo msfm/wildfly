@@ -56,6 +56,7 @@ public class Server implements Service<Server> {
     private final InjectedValue<ServletContainerService> servletContainer = new InjectedValue<>();
     private final InjectedValue<UndertowService> undertowService = new InjectedValue<>();
     private volatile HttpHandler root;
+    private volatile String route;
     private final List<ListenerService> listeners = new CopyOnWriteArrayList<>();
     private final Set<Host> hosts = new CopyOnWriteArraySet<>();
 
@@ -169,9 +170,17 @@ public class Server implements Service<Server> {
     }
 
     public String getRoute() {
-        UndertowService service = this.undertowService.getValue();
-        String defaultServerRoute = service.getInstanceId();
-        return this.name.equals(service.getDefaultServer()) ? defaultServerRoute : String.join("-", defaultServerRoute, this.name);
+        if (this.route != null && !this.route.isEmpty()) {
+            return this.route;
+        } else {
+            UndertowService service = this.undertowService.getValue();
+            String defaultServerRoute = service.getInstanceId();
+            return this.name.equals(service.getDefaultServer()) ? defaultServerRoute : String.join("-", defaultServerRoute, this.name);
+        }
+    }
+
+    public void setRoute(String route) {
+        this.route = route;
     }
 
     private final class DefaultHostHandler implements HttpHandler {
