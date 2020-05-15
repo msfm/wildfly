@@ -90,6 +90,7 @@ public class ModClusterService extends FilterService {
     private final int requestQueueSize;
     private final boolean useAlias;
     private final int maxRetries;
+    private final boolean reuseXForwarded;
     private final FailoverStrategy failoverStrategy;
     private final RouteParsingStrategy routeParsingStrategy;
     private final String routeDelimiter;
@@ -113,6 +114,7 @@ public class ModClusterService extends FilterService {
                       int requestQueueSize,
                       boolean useAlias,
                       int maxRetries,
+                      boolean reuseXForwarded,
                       FailoverStrategy failoverStrategy,
                       RouteParsingStrategy routeParsingStrategy,
                       String routeDelimiter,
@@ -132,6 +134,7 @@ public class ModClusterService extends FilterService {
         this.requestQueueSize = requestQueueSize;
         this.useAlias = useAlias;
         this.maxRetries = maxRetries;
+        this.reuseXForwarded = reuseXForwarded;
         this.failoverStrategy = failoverStrategy;
         this.routeParsingStrategy = routeParsingStrategy;
         this.routeDelimiter = routeDelimiter;
@@ -175,6 +178,7 @@ public class ModClusterService extends FilterService {
                 .setTtl(connectionIdleTimeout)
                 .setMaxConnections(connectionsPerThread)
                 .setUseAlias(useAlias)
+                .setReuseXForwarded(reuseXForwarded)
                 .setRouteParsingStrategy(routeParsingStrategy)
                 .setRankedAffinityDelimiter(routeDelimiter)
         ;
@@ -313,6 +317,7 @@ public class ModClusterService extends FilterService {
                 ModClusterDefinition.REQUEST_QUEUE_SIZE.resolveModelAttribute(operationContext, model).asInt(),
                 ModClusterDefinition.USE_ALIAS.resolveModelAttribute(operationContext, model).asBoolean(),
                 ModClusterDefinition.MAX_RETRIES.resolveModelAttribute(operationContext, model).asInt(),
+                ModClusterDefinition.REUSE_X_FORWARDED.resolveModelAttribute(operationContext, model).asBoolean(),
                 Enum.valueOf(FailoverStrategy.class, ModClusterDefinition.FAILOVER_STRATEGY.resolveModelAttribute(operationContext, model).asString()),
                 routeParsingStrategy,
                 routeDelimiter,

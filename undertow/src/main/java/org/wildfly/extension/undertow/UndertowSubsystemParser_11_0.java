@@ -278,7 +278,9 @@ public class UndertowSubsystemParser_11_0 extends PersistentResourceXMLParser {
                                                         ReverseProxyHandler.REQUEST_QUEUE_SIZE,
                                                         ReverseProxyHandler.CACHED_CONNECTIONS_PER_THREAD,
                                                         ReverseProxyHandler.CONNECTION_IDLE_TIMEOUT,
-                                                        ReverseProxyHandler.MAX_RETRIES)
+                                                        ReverseProxyHandler.MAX_RETRIES,
+                                                        ReverseProxyHandler.REWRITE_HOST_HEADER,
+                                                        ReverseProxyHandler.REUSE_X_FORWARDED)
                                                 .addChild(builder(ReverseProxyHandlerHost.INSTANCE.getPathElement())
                                                         .setXmlElementName(Constants.HOST)
                                                         .addAttributes(
@@ -338,7 +340,8 @@ public class UndertowSubsystemParser_11_0 extends PersistentResourceXMLParser {
                                         ModClusterDefinition.HTTP2_MAX_CONCURRENT_STREAMS,
                                         ModClusterDefinition.HTTP2_MAX_FRAME_SIZE,
                                         ModClusterDefinition.HTTP2_MAX_HEADER_LIST_SIZE,
-                                        ModClusterDefinition.MAX_RETRIES)
+                                        ModClusterDefinition.MAX_RETRIES,
+                                        ModClusterDefinition.REUSE_X_FORWARDED)
                                         .addChild(
                                                 builder(NoAffinityResourceDefinition.PATH).setXmlElementName(Constants.NO_AFFINITY)
                                         )

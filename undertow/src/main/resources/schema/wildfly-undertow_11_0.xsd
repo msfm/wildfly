@@ -737,6 +737,8 @@
         <xs:attribute name="cached-connections-per-thread" use="optional" type="xs:integer"/>
         <xs:attribute name="connection-idle-timeout" use="optional" type="xs:integer"/>
         <xs:attribute name="max-retries" type="xs:int" use="optional" />
+        <xs:attribute name="rewrite-host-header" type="xs:string" use="optional" default="false" />
+        <xs:attribute name="reuse-x-forwarded" type="xs:string" use="optional" default="false" />
     </xs:complexType>
 
     <xs:complexType name="reverse-proxy-hostType">
@@ -904,6 +906,7 @@
         <xs:attribute name="http2-max-frame-size" type="xs:int" use="optional" />
         <xs:attribute name="http2-max-header-list-size" type="xs:int" use="optional" />
         <xs:attribute name="max-retries" type="xs:int" use="optional" />
+        <xs:attribute name="reuse-x-forwarded" type="xs:string" use="optional" default="false" />
     </xs:complexType>
 
     <xs:group name="affinity">

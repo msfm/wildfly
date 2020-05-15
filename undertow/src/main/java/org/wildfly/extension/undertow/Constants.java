@@ -229,6 +229,8 @@ public interface Constants {
     String PER_MESSAGE_DEFLATE = "per-message-deflate";
     String DEFLATER_LEVEL = "deflater-level";
     String MAX_RETRIES = "max-retries";
+    String REWRITE_HOST_HEADER = "rewrite-host-header";
+    String REUSE_X_FORWARDED = "reuse-x-forwarded";
 
     // Affinity
     String AFFINITY = "affinity";

@@ -107,6 +107,20 @@ public class ReverseProxyHandler extends Handler {
             .setDefaultValue(new ModelNode(1L))
             .build();
 
+    public static final AttributeDefinition REWRITE_HOST_HEADER = new SimpleAttributeDefinitionBuilder(Constants.REWRITE_HOST_HEADER, ModelType.BOOLEAN)
+            .setRequired(false)
+            .setRestartAllServices()
+            .setAllowExpression(true)
+            .setDefaultValue(ModelNode.FALSE)
+            .build();
+
+    public static final AttributeDefinition REUSE_X_FORWARDED = new SimpleAttributeDefinitionBuilder(Constants.REUSE_X_FORWARDED, ModelType.BOOLEAN)
+            .setRequired(false)
+            .setRestartAllServices()
+            .setAllowExpression(true)
+            .setDefaultValue(ModelNode.FALSE)
+            .build();
+
     public static final ReverseProxyHandler INSTANCE = new ReverseProxyHandler();
 
     private ReverseProxyHandler() {
@@ -118,7 +132,7 @@ public class ReverseProxyHandler extends Handler {
         return Arrays.asList(CONNECTIONS_PER_THREAD, SESSION_COOKIE_NAMES,
                 PROBLEM_SERVER_RETRY, REQUEST_QUEUE_SIZE, MAX_REQUEST_TIME,
                 CACHED_CONNECTIONS_PER_THREAD, CONNECTION_IDLE_TIMEOUT,
-                MAX_RETRIES);
+                MAX_RETRIES, REWRITE_HOST_HEADER, REUSE_X_FORWARDED);
     }
 
     @Override
@@ -137,7 +151,8 @@ public class ReverseProxyHandler extends Handler {
         int cachedConnectionsPerThread = CACHED_CONNECTIONS_PER_THREAD.resolveModelAttribute(context, model).asInt();
         int connectionIdleTimeout = CONNECTION_IDLE_TIMEOUT.resolveModelAttribute(context, model).asInt();
         int maxRetries = MAX_RETRIES.resolveModelAttribute(context, model).asInt();
-
+        boolean rewriteHostHeader = REWRITE_HOST_HEADER.resolveModelAttribute(context, model).asBoolean();
+        boolean reuseXForwarded = REUSE_X_FORWARDED.resolveModelAttribute(context, model).asBoolean();
 
         final LoadBalancingProxyClient lb = new LoadBalancingProxyClient(exchange -> {
             //we always create a new connection for upgrade requests
@@ -153,7 +168,15 @@ public class ReverseProxyHandler extends Handler {
             lb.addSessionCookieName(id);
         }
 
-        ProxyHandler handler = new ProxyHandler(lb, maxTime, ResponseCodeHandler.HANDLE_404, false, false, maxRetries);
+        ProxyHandler handler = ProxyHandler.builder()
+            .setProxyClient(lb)
+            .setMaxRequestTime(maxTime)
+            .setNext(ResponseCodeHandler.HANDLE_404)
+            .setRewriteHostHeader(rewriteHostHeader)
+            .setReuseXForwarded(reuseXForwarded)
+            .setMaxConnectionRetries(maxRetries)
+            .build();
+
         return handler;
     }
 }
