@@ -30,7 +30,9 @@ import io.undertow.security.handlers.AuthenticationCallHandler;
 import io.undertow.security.handlers.AuthenticationConstraintHandler;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.handlers.Cookie;
+import io.undertow.server.handlers.CookieImpl;
 import io.undertow.server.handlers.PathHandler;
+import io.undertow.server.session.SecureRandomSessionIdGenerator;
 import org.jboss.as.domain.management.SecurityRealm;
 import org.jboss.as.web.session.SimpleRoutingSupport;
 import org.jboss.as.web.session.SimpleSessionIdentifierCodec;
@@ -84,11 +86,17 @@ class HttpInvokerHostService implements Service<HttpInvokerHostService> {
 
     private HttpHandler setupRoutes(HttpHandler handler) {
         final SimpleSessionIdentifierCodec codec = new SimpleSessionIdentifierCodec(new SimpleRoutingSupport(), this.host.getValue().getServer().getRoute());
+        final SecureRandomSessionIdGenerator generator = new SecureRandomSessionIdGenerator();
         return exchange -> {
             exchange.addResponseCommitListener(ex -> {
                 Cookie cookie = ex.getResponseCookies().get(JSESSIONID);
-                if(cookie != null ) {
+                if (cookie != null ) {
                     cookie.setValue(codec.encode(cookie.getValue()).toString());
+                } else if (ex.getStatusCode() == 401) {
+                    // we need to add a session cookie in order to avoid sticky session issue after 401 authentication response
+                    cookie = new CookieImpl("JSESSIONID", codec.encode(generator.createSessionId()).toString());
+                    cookie.setPath(ex.getResolvedPath());
+                    exchange.getResponseCookies().put("JSESSIONID", cookie);
                 }
             });
             handler.handleRequest(exchange);
